@@ -36,6 +36,9 @@ window.addEventListener('DOMContentLoaded', event => {
 // Function that gets called when the button is pushed.
 // This takes all the data inputs and calls the API to get the predicted revenue.
 async function getPredictedRevenue() {
+    console.log("Called getPredictedRevenue()");
+
+    const apiUrl = "https://coil-team9-api-b5becqfabsbahbba.eastus-01.azurewebsites.net/predict";
     const revenueBox = document.getElementById("predictedRevenue");
 
     var title = $("#data-title").val();
@@ -45,30 +48,50 @@ async function getPredictedRevenue() {
     var votes = $("#data-votes").val();
     var director = $("#data-director").val();
     var actor = $("#data-actor").val();
-    var country = $("#data-country").val();
     var budget = $("#data-budget").val();
     var company = $("#data-company").val();
     var runtime = $("#data-runtime").val();
+    
+    const payload = {
+        release_year: parseInt(release),
+        title: title,
+        budget: parseFloat(budget),
+        production_companies: company,
+        vote_count: parseInt(votes),
+        imdb_score: parseFloat(score),
+        runtime: parseInt(runtime),
+        directors: director,
+        actors: actor,
+        genres: genre
+    };
 
-    console.log("Called getPredictedRevenue()");
+    console.log("Payload: ", payload);
 
-    console.log("Title: " + title);
-    console.log("Genre: " + genre);
-    console.log("Release: " + release);
-    console.log("Score: " + score);
-    console.log("Votes: " + votes);
-    console.log("Director: " + director);
-    console.log("Actor: " + actor);
-    console.log("Country: " + country);
-    console.log("Budget: " + budget);
-    console.log("Company: " + company);
-    console.log("Runtime: " + runtime);
-
-    // Set content
-    $("#predictedRevenue").html(
-        "Predicted Revenue: " + title + " " + genre + " " + release + " " + score + " " + votes + " " +
-        director + " " + actor + " " + country + " " + budget + " " + company + " " + runtime
-    );
+    try {
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+    
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+    
+        const data = await response.json();
+        console.log("Prediction:", data.prediction);
+    
+        revenueBox.textContent = `Predicted Revenue: $${data.prediction.toLocaleString()}`;
+        revenueBox.style.display = "inline-block";
+        revenueBox.classList.add("show");
+    
+    } catch (error) {
+        console.error("Error calling the predict API:", error);
+        revenueBox.textContent = "An error occurred. Try again.";
+        revenueBox.style.display = "inline-block";
+    }    
 
     // Show and animate
     revenueBox.style.display = "inline-block"; // ensure it's visible
